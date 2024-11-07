@@ -41,6 +41,13 @@ bash scripts/inference.sh
 ```
 
 
+## Evaluation
+To evaluate the generated results, run the command:
+```
+python eval.py --dict_path basic_event_dictionary.pkl --output_file_path results
+```
+
+
 ## Environment
 We implemented the code on an environment running Ubuntu 22.04.1, utilizing a 12th Generation Intel(R) Core(TM) i7-12700 CPU, along with a single NVIDIA GeForce RTX 4090 GPU equipped with 24 GB of dedicated memory.
 

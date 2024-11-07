@@ -1,19 +1,21 @@
-import json
+import glob
 import os
 from argparse import ArgumentParser, Namespace
+from pathlib import Path
 
 import torch
 import wandb
+from miditok import REMI, TokenizerConfig
+from miditok.pytorch_data import DatasetMIDI, DataCollator
+from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM
 
 from src.constants import PROJECT_NAME, CHECKPOINT_DIR, CONFIG_FILE
-from src.dataset import MusicDataset
 from src.optimizer import get_optimizer
 from src.lr_scheduler import get_lr_scheduler
 from src.trainer import Trainer
 from src.utils import (
     set_random_seeds,
-    read_json,
     get_device,
     get_time,
     save_json,
@@ -46,7 +48,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument(
         '--batch_size',
         type=int,
-        default=16,
+        default=8,
     )
     parser.add_argument(
         '--optimizer',
@@ -57,7 +59,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument(
         '--lr',
         type=float,
-        default=1e-4,
+        default=4e-4,
     )
     parser.add_argument(
         '--weight_decay',
@@ -67,8 +69,8 @@ def parse_arguments() -> Namespace:
     parser.add_argument(
         '--lr_scheduler',
         type=str,
-        default='one_cycle',
-        choices=['step', 'one_cycle', 'cosine_annealing'],
+        default='constant',
+        choices=['constant', 'step', 'one_cycle', 'cosine_annealing'],
     )
     return parser.parse_args()
 
@@ -80,14 +82,22 @@ if __name__ == "__main__":
     os.makedirs(checkpoint_dir, exist_ok=True)
     save_json(vars(args), os.path.join(checkpoint_dir, CONFIG_FILE))
 
-    data_list = read_json(args.data_path)
-    train_loader = MusicDataset(
-        data_list
-    ).get_loader(
-        batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=args.num_workers,
+    config = TokenizerConfig(
+        num_velocities=16,
+        use_chords=True,
+        use_programs=True,
+        params=Path("path", "to", "saved", "tokenizer.json")
     )
+    tokenizer = REMI(config)
+    dataset = DatasetMIDI(
+        files_paths=list(Path("Pop1K7", "midi_analyzed").glob("**/*.mid")),
+        tokenizer=tokenizer,
+        max_seq_len=1024,
+        bos_token_id=tokenizer["BOS_None"],
+        eos_token_id=tokenizer["EOS_None"],
+    )
+    collator = DataCollator(tokenizer.pad_token_id, copy_inputs_as_labels=True)
+    train_loader = DataLoader(dataset, batch_size=8, collate_fn=collator)
 
     model = AutoModelForCausalLM.from_pretrained("gpt2")
     device = get_device()

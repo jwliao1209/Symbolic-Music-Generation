@@ -12,6 +12,12 @@ def get_lr_scheduler(
     ) -> _LRScheduler:
 
     match name:
+        case 'constant':
+            return torch.optim.lr_scheduler.ConstantLR(
+                optimizer=optimizer,
+                factor=1,
+                total_iters=epochs * steps_for_one_epoch,
+            )
         case 'step':
             return torch.optim.lr_scheduler.StepLR(
                 optimizer=optimizer,
