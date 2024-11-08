@@ -23,54 +23,70 @@ from src.utils import (
 
 
 def parse_arguments() -> Namespace:
-    parser = ArgumentParser(description='Symbolic Music Generation')
+    parser = ArgumentParser(description="Symbolic Music Generation")
 
     # dataset setting
     parser.add_argument(
-        '--data_path',
+        "--data_folder",
         type=str,
-        default='data.json',
-        help='path of dataset'
+        default="Pop1K7/midi_analyzed",
+        help="folder of dataset"
     )
     parser.add_argument(
-        '--num_workers',
+        "--max_seq_len",
+        type=int,
+        default=1024,
+    )
+    parser.add_argument(
+        "--tokenizer_name",
+        type=str,
+        default="remi",
+    )
+    parser.add_argument(
+        "--num_workers",
         type=int,
         default=4,
-        help='Number of workers for dataloader.',
+        help="Number of workers for dataloader.",
     )
 
     # training setting
     parser.add_argument(
-        '--epochs',
+        "--model_name",
+        type=str,
+        default="gpt2",
+        choices=["gpt2", "google/bigbird-roberta-base"],
+    )
+    parser.add_argument(
+        "--epochs",
         type=int,
         default=100,
     )
     parser.add_argument(
-        '--batch_size',
+        "--batch_size",
         type=int,
         default=8,
     )
     parser.add_argument(
-        '--optimizer',
+        "--optimizer",
         type=str,
-        default='adamw',
-        choices=['sgd', 'adam', 'adamw'],
+        default="adamw",
+        choices=["sgd", "adam", "adamw"],
     )
     parser.add_argument(
-        '--lr',
+        "--lr",
         type=float,
         default=4e-4,
     )
     parser.add_argument(
-        '--weight_decay',
+        "--weight_decay",
         type=float,
         default=1e-5,
     )
     parser.add_argument(
-        '--lr_scheduler',
+        "--lr_scheduler",
         type=str,
-        default='one_cycle',
-        choices=['constant', 'step', 'one_cycle', 'cosine_annealing'],
+        default="one_cycle",
+        choices=["constant", "step", "one_cycle", "cosine_annealing"],
     )
     return parser.parse_args()
 
@@ -78,21 +94,22 @@ def parse_arguments() -> Namespace:
 if __name__ == "__main__":
     set_random_seeds()
     args = parse_arguments()
-    checkpoint_dir = os.path.join(CHECKPOINT_DIR, get_time())
+    checkpoint_dir = Path(CHECKPOINT_DIR, get_time())
     os.makedirs(checkpoint_dir, exist_ok=True)
-    save_json(vars(args), os.path.join(checkpoint_dir, CONFIG_FILE))
+    save_json(vars(args), Path(checkpoint_dir, CONFIG_FILE))
 
     config = TokenizerConfig(
         num_velocities=16,
         use_chords=True,
         use_programs=True,
-        params=Path("path", "to", "saved", "tokenizer.json")
+        params=Path("tokenizers", f"{tokenizer_name}.json")
     )
     tokenizer = REMI(config)
+    tokenizer.save(Path(checkpoint_dir, "tokenizer.json"))
     dataset = DatasetMIDI(
-        files_paths=list(Path("Pop1K7", "midi_analyzed").glob("**/*.mid")),
+        files_paths=list(Path(args.data_folder).glob("**/*.mid")),
         tokenizer=tokenizer,
-        max_seq_len=1024,
+        max_seq_len=args.max_seq_len,
         bos_token_id=tokenizer["BOS_None"],
         eos_token_id=tokenizer["EOS_None"],
     )
@@ -100,8 +117,14 @@ if __name__ == "__main__":
         tokenizer.pad_token_id,
         copy_inputs_as_labels=True,
     )
-    train_loader = DataLoader(dataset, batch_size=8, collate_fn=collator)
-    model = AutoModelForCausalLM.from_pretrained("gpt2")
+    train_loader = DataLoader(
+        dataset,
+        batch_size=args.batch_size,
+        collate_fn=collator,
+    )
+
+    # Prepare model
+    model = AutoModelForCausalLM.from_pretrained(args.model_name)
     device = get_device()
     optimizer = get_optimizer(
         name=args.optimizer,
@@ -109,7 +132,6 @@ if __name__ == "__main__":
         lr=args.lr,
         weight_decay=args.weight_decay,
     )
-
     lr_scheduler = get_lr_scheduler(
         name=args.lr_scheduler,
         optimizer=optimizer,
@@ -124,7 +146,7 @@ if __name__ == "__main__":
         name=os.path.basename(checkpoint_dir),
         config=vars(args),
     )
-    wandb.watch(model, log='all')
+    wandb.watch(model, log="all")
 
     trainer = Trainer(
         model=model,

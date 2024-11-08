@@ -162,4 +162,4 @@ if __name__ == "__main__":
                 "gs": gs,
             }
         )
-    pd.DataFrame(scores).to_csv("scores.csv", index=False)
+    pd.DataFrame(scores).to_csv("results/task1/scores.csv", index=False)

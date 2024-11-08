@@ -161,12 +161,10 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-__MACOSX/
 Pop1K7/
-checkpoints/
 wandb/
-temp/
+tokenizers/
+checkpoints/
 prompt_song/
 results/
-path/
-scores.csv
+temp/

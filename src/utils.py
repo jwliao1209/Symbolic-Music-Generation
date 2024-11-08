@@ -7,22 +7,27 @@ from typing import Dict, List, Union
 
 import numpy as np
 import torch
+from easydict import EasyDict
 
 
 def get_file_paths(folder_path):
     return sorted(
         list(Path(folder_path).glob("*.mid")),
-        key=lambda x: int(re.search(r'(\d+)$', x.stem).group(1))
+        key=lambda x: int(re.search(r"(\d+)$", x.stem).group(1))
     )
 
 
 def read_json(path: str) -> Dict[str, Union[str, int, float]]:
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         return json.load(f)
 
 
+def load_config(path: str) -> EasyDict:
+    return EasyDict(read_json(path))
+
+
 def get_time() -> str:
-    return datetime.today().strftime('%m-%d-%H-%M-%S')
+    return datetime.today().strftime("%m-%d-%H-%M-%S")
 
 
 def set_random_seeds(seed: int = 0) -> None:
@@ -39,12 +44,12 @@ def set_random_seeds(seed: int = 0) -> None:
 
 
 def save_json(data, path: str) -> None:
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         json.dump(data, f, indent=4)
 
 
 def get_device() -> torch.device:
-    return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def dict_to_device(data: Dict[str, List[float]], device: torch.device) -> Dict[str, torch.Tensor]:
