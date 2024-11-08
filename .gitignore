@@ -169,8 +169,4 @@ temp/
 prompt_song/
 results/
 path/
-Pop1K7.zip
-data.json
-basic_event_dictionary.pkl
-eval.py
-musdr.py
+scores.csv

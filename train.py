@@ -69,7 +69,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument(
         '--lr_scheduler',
         type=str,
-        default='constant',
+        default='one_cycle',
         choices=['constant', 'step', 'one_cycle', 'cosine_annealing'],
     )
     return parser.parse_args()
@@ -96,9 +96,11 @@ if __name__ == "__main__":
         bos_token_id=tokenizer["BOS_None"],
         eos_token_id=tokenizer["EOS_None"],
     )
-    collator = DataCollator(tokenizer.pad_token_id, copy_inputs_as_labels=True)
+    collator = DataCollator(
+        tokenizer.pad_token_id,
+        copy_inputs_as_labels=True,
+    )
     train_loader = DataLoader(dataset, batch_size=8, collate_fn=collator)
-
     model = AutoModelForCausalLM.from_pretrained("gpt2")
     device = get_device()
     optimizer = get_optimizer(

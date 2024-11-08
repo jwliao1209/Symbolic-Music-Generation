@@ -21,7 +21,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument(
         "--ckpt_path",
         type=str,
-        default="checkpoints/11-07-18-03-23/checkpoint.pt",
+        default="checkpoints/11-07-23-27-52/checkpoint.pt",
         help="path of checkpoint",
     )
     parser.add_argument(
@@ -81,6 +81,7 @@ if __name__ == "__main__":
         temperature=1.2,
         top_k=5,
         pad_token_id=model.config.eos_token_id,
+        repetition_penalty=1.8,
     )
 
     for i, data in enumerate(tqdm(truncated_midi_tokens)):

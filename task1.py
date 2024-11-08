@@ -16,7 +16,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument(
         "--ckpt_path",
         type=str,
-        default="checkpoints/11-07-18-03-23/checkpoint.pt",
+        default="checkpoints/11-07-23-27-52/checkpoint.pt",
         help="path of checkpoint",
     )
     parser.add_argument(
@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
     model = AutoModelForCausalLM.from_pretrained("gpt2")
     model.load_state_dict(
-        torch.load(args.cjpt_path, weights_only=True)["model"]
+        torch.load(args.ckpt_path, weights_only=True)["model"]
     )
     device = get_device()
     model.to(device)
