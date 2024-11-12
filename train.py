@@ -1,14 +1,12 @@
-import glob
 import os
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
-import torch
 import wandb
 from miditok import REMI, TokenizerConfig
 from miditok.pytorch_data import DatasetMIDI, DataCollator
 from torch.utils.data import DataLoader
-from transformers import AutoModelForCausalLM
+from transformers import AutoModelForCausalLM, GPTConfig, GPT
 
 from src.constants import PROJECT_NAME, CHECKPOINT_DIR, CONFIG_FILE
 from src.optimizer import get_optimizer
@@ -41,6 +39,7 @@ def parse_arguments() -> Namespace:
         "--tokenizer_name",
         type=str,
         default="remi",
+        choices=["remi", "remiplus", "midilike"],
     )
     parser.add_argument(
         "--num_workers",
@@ -54,7 +53,7 @@ def parse_arguments() -> Namespace:
         "--model_name",
         type=str,
         default="gpt2",
-        choices=["gpt2", "google/bigbird-roberta-base"],
+        choices=["gpt2", "EleutherAI/gpt-neo-125M"],
     )
     parser.add_argument(
         "--epochs",
@@ -102,7 +101,8 @@ if __name__ == "__main__":
         num_velocities=16,
         use_chords=True,
         use_programs=True,
-        params=Path("tokenizers", f"{tokenizer_name}.json")
+        use_tempos=True,
+        params=Path("tokenizers", f"{args.tokenizer_name}.json").stem
     )
     tokenizer = REMI(config)
     tokenizer.save(Path(checkpoint_dir, "tokenizer.json"))

@@ -166,5 +166,6 @@ wandb/
 tokenizers/
 checkpoints/
 prompt_song/
+soundfonts/
 results/
 temp/

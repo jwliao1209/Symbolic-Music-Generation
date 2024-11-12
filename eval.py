@@ -1,18 +1,17 @@
 import itertools
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from miditok import REMI, TokenizerConfig
 from miditok.pytorch_data import DatasetMIDI
-from musdr import (
+
+from src.musdr import (
     get_bars_crop, 
     get_pitch_histogram, 
     compute_histogram_entropy, 
     get_onset_xor_distance,
-    get_chord_sequence,
-    read_fitness_mat
 )
-import numpy as np
 
 
 def compute_piece_pitch_entropy(

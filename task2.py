@@ -9,7 +9,7 @@ from transformers import AutoModelForCausalLM, GenerationConfig
 from tqdm import tqdm
 
 from src.constants import CONFIG_FILE, CKPT_FILE
-from src.utils import set_random_seeds, get_file_paths, get_device, get_trucated_idx, load_config
+from src.utils import get_file_paths, get_device, get_trucated_idx, load_config
 
 
 def parse_arguments() -> Namespace:
@@ -56,7 +56,8 @@ def truncate_to_nbars(midi_paths, tokenizer, num_bar=8):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    os.makedirs("results/task2", exist_ok=True)
+    save_folder = Path("results", Path(args.ckpt_path).name, "task2")
+    os.makedirs(save_folder, exist_ok=True)
     ckpt_config = load_config(Path(args.ckpt_path, CONFIG_FILE))
     tokenizer_config = TokenizerConfig(
         num_velocities=16,
@@ -88,7 +89,7 @@ if __name__ == "__main__":
         repetition_penalty=1.2,
     )
 
-    for i, data in enumerate(tqdm(truncated_midi_tokens)):
+    for i, data in enumerate(tqdm(truncated_midi_tokens), start=1):
         generated_tokens = data.copy()
         input_ids = torch.tensor(data).unsqueeze(0).long().to(device)
         attention_mask = torch.ones_like(input_ids).to(device)
@@ -109,4 +110,4 @@ if __name__ == "__main__":
         truncated_idx = get_trucated_idx(generated_tokens, tokenizer, args.n_target_bar)
         valid_tokens = [token for token in generated_tokens[:truncated_idx + 1] if token in tokenizer.vocab.values()]
         generated_midi = tokenizer.decode(valid_tokens)
-        generated_midi.dump_midi(Path("results", "task2", f"{i}.mid"))
+        generated_midi.dump_midi(Path(save_folder, f"song_{i}.mid"))
