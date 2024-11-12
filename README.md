@@ -35,16 +35,28 @@ bash scripts/train.sh
 
 
 ## Inference
-To inference the model, run the command:
+
+### Task 1
+To generate the symbolic music, run the command:
 ```
-bash scripts/inference.sh
+python task1.py --output_folder <Folder path for saving the generated file>
+```
+
+## Task 2
+To continue the symbolic music, run the command:
+```
+python task2.py \
+    --prompt_song_path <Folder path for prompt song> \
+    --output_folder <Folder path for saving the generated file>
 ```
 
 
 ## Evaluation
 To evaluate the generated results, run the command:
 ```
-python eval.py --dict_path basic_event_dictionary.pkl --output_file_path results
+python eval.py \
+    --eval_folder <Results folder to evaluation> \
+    --output_path <Path for output score.csv>
 ```
 
 

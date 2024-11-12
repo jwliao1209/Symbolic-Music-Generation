@@ -31,13 +31,18 @@ def parse_arguments() -> Namespace:
         default=20,
         help="number of generated midi",
     )
+    parser.add_argument(
+        "--output_folder",
+        type=str,
+        default="results",
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     set_random_seeds()
     args = parse_arguments()
-    save_folder = Path("results", Path(args.ckpt_path).name, "task1")
+    save_folder = Path(args.output_folder, Path(args.ckpt_path).name, "task1")
     os.makedirs(save_folder, exist_ok=True)
     ckpt_config = load_config(Path(args.ckpt_path, CONFIG_FILE))
     tokenizer_config = TokenizerConfig(

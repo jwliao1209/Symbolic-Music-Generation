@@ -32,6 +32,11 @@ def parse_arguments() -> Namespace:
         default=32,
         help="number of target bars",
     )
+    parser.add_argument(
+        "--output_folder",
+        type=str,
+        default="results",
+    )
     return parser.parse_args()
 
 
@@ -56,7 +61,7 @@ def truncate_to_nbars(midi_paths, tokenizer, num_bar=8):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    save_folder = Path("results", Path(args.ckpt_path).name, "task2")
+    save_folder = Path(args.output_folder, Path(args.ckpt_path).name, "task2")
     os.makedirs(save_folder, exist_ok=True)
     ckpt_config = load_config(Path(args.ckpt_path, CONFIG_FILE))
     tokenizer_config = TokenizerConfig(

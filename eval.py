@@ -14,6 +14,20 @@ from src.musdr import (
 )
 
 
+def parse_arguments() -> Namespace:
+    parser = ArgumentParser(description="Evaluation")
+    parser.add_argument(
+        "--eval_folder",
+        type=str,
+    )
+    parser.add_argument(
+        "--output_path",
+        type=str,
+        default=None,
+    )
+    return parser.parse_args()
+
+
 def compute_piece_pitch_entropy(
     piece_ev_seq,
     window_size,
@@ -110,6 +124,7 @@ def compute_piece_groove_similarity(
 
 
 if __name__ == "__main__":
+    args = parse_arguments()
     config = TokenizerConfig(
         num_velocities=16,
         use_chords=True,
@@ -124,7 +139,7 @@ if __name__ == "__main__":
     PITCH_EVS = [v for k,v  in tokenizer.vocab.items() if "Pitch" in k]
 
     dataset = DatasetMIDI(
-        files_paths=list(Path("results").glob("*.mid")),
+        files_paths=list(Path(args.eval_folder).glob("*.mid")),
         tokenizer=tokenizer,
         max_seq_len=1024,
         bos_token_id=tokenizer["BOS_None"],
@@ -161,4 +176,5 @@ if __name__ == "__main__":
                 "gs": gs,
             }
         )
-    pd.DataFrame(scores).to_csv("results/task1/scores.csv", index=False)
+    output_path = output_path if args.output_path is not None else Path(args.eval_folder, "scores.csv")
+    pd.DataFrame(scores).to_csv(output_path, index=False)
