@@ -1,6 +1,6 @@
 # Symbolic Music Generation
 
-This repository contains the implementation for Homework 3 of the CommE5070 Deep Learning for Music Analysis and Generation course, Fall 2024, at National Taiwan University. For a detailed report, please refer to this [slides]().
+This repository contains the implementation for Homework 3 of the CommE5070 Deep Learning for Music Analysis and Generation course, Fall 2024, at National Taiwan University. For a detailed report, please refer to this [slides](https://docs.google.com/presentation/d/1f27a5Ok4PWTeoof0pUThKlr9Kegm_fX5AYOJuFv4s_w/edit?usp=sharing).
 
 
 ## Setup
