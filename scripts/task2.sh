@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CKPT_NAME=${1:-"11-12-23-45-22"}
+CKPT_NAME=${1:-"11-08-23-02-35"}
 python task2.py \
     --ckpt_path checkpoints/$CKPT_NAME
 

@@ -24,7 +24,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument(
         "--ckpt_path",
         type=str,
-        default="checkpoints/11-07-23-27-52",
+        default="checkpoints/11-08-23-02-35",
         help="path of checkpoint",
     )
     parser.add_argument(

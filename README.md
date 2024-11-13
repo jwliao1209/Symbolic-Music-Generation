@@ -30,7 +30,7 @@ bash scripts/download_ckpt.sh
 ## Training
 To train the model, run the command:
 ```
-bash scripts/train.sh
+python train.py
 ```
 
 
@@ -39,13 +39,16 @@ bash scripts/train.sh
 ### Task 1
 To generate the symbolic music, run the command:
 ```
-python task1.py --output_folder <Folder path for saving the generated file>
+python task1.py \
+    --ckpt_path checkpoints/<checkpoint name> \
+    --output_folder <Folder path for saving the generated file>
 ```
 
 ## Task 2
 To continue the symbolic music, run the command:
 ```
 python task2.py \
+    --ckpt_path checkpoints/<checkpoint name> \
     --prompt_song_path <Folder path for prompt song> \
     --output_folder <Folder path for saving the generated file>
 ```
@@ -57,6 +60,15 @@ To evaluate the generated results, run the command:
 python eval.py \
     --eval_folder <Results folder to evaluation> \
     --output_path <Path for output score.csv>
+```
+
+
+## Converting MIDI Files to WAV Format
+To convert `.mid` file to `.wav` file, run the command:
+```
+python convert_mid_to_wav.py \
+    --input_folder <Path for input folder> \
+    --output_folder <Path for output folder>
 ```
 
 
