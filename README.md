@@ -51,7 +51,7 @@ python task1.py \
     --output_folder <Folder path for saving the generated file>
 ```
 
-## Task 2
+### Task 2
 To continue the symbolic music, run the command:
 ```
 python task2.py \
