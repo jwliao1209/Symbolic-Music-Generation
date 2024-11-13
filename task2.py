@@ -4,12 +4,20 @@ from argparse import ArgumentParser, Namespace
 
 import torch
 from miditok import REMI, TokenizerConfig
-from symusic import Score
 from transformers import AutoModelForCausalLM, GenerationConfig
 from tqdm import tqdm
 
 from src.constants import CONFIG_FILE, CKPT_FILE
-from src.utils import get_file_paths, get_device, get_trucated_idx, load_config
+from src.utils import (
+    get_file_paths,
+    get_device,
+    get_trucated_idx,
+    load_config,
+    save_json,
+    truncate_to_nbars,
+    generate_tokens,
+    filter_invalid_tokens,
+)
 
 
 def parse_arguments() -> Namespace:
@@ -23,14 +31,39 @@ def parse_arguments() -> Namespace:
     parser.add_argument(
         "--ckpt_path",
         type=str,
-        default="checkpoints/11-07-23-27-52",
+        default="checkpoints/11-10-23-41-39",
         help="path of checkpoint",
+    )
+    parser.add_argument(
+        "--num_velocities",
+        type=int,
+        default=16,
     )
     parser.add_argument(
         "--n_target_bar",
         type=int,
         default=32,
         help="number of target bars",
+    )
+    parser.add_argument(
+        "--max_length",
+        type=int,
+        default=1024,
+    )
+    parser.add_argument(
+        "--top_k",
+        type=int,
+        default=5,
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=1.2,
+    )
+    parser.add_argument(
+        "--repetition_penalty",
+        type=float,
+        default=1.2,
     )
     parser.add_argument(
         "--output_folder",
@@ -40,35 +73,17 @@ def parse_arguments() -> Namespace:
     return parser.parse_args()
 
 
-def truncate_to_nbars(midi_paths, tokenizer, num_bar=8):
-    truncated_midi_tokens = []
-    for midi_path in midi_paths:
-        midi = Score(midi_path)
-        tokens = tokenizer.encode(midi)
-
-        bar_count = 0
-        truncated_tokens = []
-        for token in tokens:
-            truncated_tokens.append(token)
-            if token == tokenizer["Bar_None"]:
-                bar_count += 1
-
-            if bar_count >= num_bar:
-                break
-        truncated_midi_tokens.append(truncated_tokens)
-    return truncated_midi_tokens
-
-
 if __name__ == "__main__":
     args = parse_arguments()
     save_folder = Path(args.output_folder, Path(args.ckpt_path).name, "task2")
     os.makedirs(save_folder, exist_ok=True)
     ckpt_config = load_config(Path(args.ckpt_path, CONFIG_FILE))
+
     tokenizer_config = TokenizerConfig(
-        num_velocities=16,
+        num_velocities=args.num_velocities,
         use_chords=True,
-        use_programs=True,
         use_tempos=True,
+        use_programs=True,
         params=Path(args.ckpt_path, "tokenizer.json")
     )
     tokenizer = REMI(tokenizer_config)
@@ -86,33 +101,18 @@ if __name__ == "__main__":
     model.eval()
 
     generation_config = GenerationConfig(
-        max_length=1024,
+        max_length=args.max_length,
         do_sample=True,
-        temperature=1.2,
-        top_k=5,
+        top_k=args.top_k,
+        temperature=args.temperature,
         pad_token_id=model.config.eos_token_id,
-        repetition_penalty=1.2,
+        repetition_penalty=args.repetition_penalty,
     )
+    save_json(vars(args) | {"checkpoint": ckpt_config}, Path(save_folder, CONFIG_FILE))
 
     for i, data in enumerate(tqdm(truncated_midi_tokens), start=1):
-        generated_tokens = data.copy()
-        input_ids = torch.tensor(data).unsqueeze(0).long().to(device)
-        attention_mask = torch.ones_like(input_ids).to(device)
-
-        while generated_tokens.count(BAR_TOKEN) < args.n_target_bar:
-            output = model.generate(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                generation_config=generation_config,
-            )[0].cpu().numpy().tolist()
-            new_token = output[input_ids.shape[-1]:]
-            generated_tokens.extend(new_token)
-            tqdm.write(f"Prompt song {i} new bar: {new_token.count(BAR_TOKEN)}, generated bar: {generated_tokens.count(BAR_TOKEN)}")
-
-            input_ids = torch.tensor(generated_tokens[-500:]).unsqueeze(0).long().to(device)
-            attention_mask = torch.ones_like(input_ids).to(device)
-
+        generated_tokens = generate_tokens(data, model, device, args.n_target_bar, BAR_TOKEN, generation_config)
         truncated_idx = get_trucated_idx(generated_tokens, tokenizer, args.n_target_bar)
-        valid_tokens = [token for token in generated_tokens[:truncated_idx + 1] if token in tokenizer.vocab.values()]
+        valid_tokens = filter_invalid_tokens(generated_tokens[:truncated_idx + 1], tokenizer)
         generated_midi = tokenizer.decode(valid_tokens)
         generated_midi.dump_midi(Path(save_folder, f"song_{i}.mid"))

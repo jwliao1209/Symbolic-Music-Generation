@@ -3,6 +3,7 @@ import random
 import re
 from datetime import datetime
 from pathlib import Path
+from symusic import Score
 from typing import Dict, List, Union
 
 import numpy as np
@@ -61,3 +62,48 @@ def get_trucated_idx(generated_tokens, tokenizer, n_target_bar):
     return np.where(
         np.cumsum([np.array(generated_tokens) == BAR_TOKEN]) == n_target_bar
     )[0][0]
+
+
+def truncate_to_nbars(midi_paths, tokenizer, num_bar=8):
+    truncated_midi_tokens = []
+    for midi_path in midi_paths:
+        midi = Score(midi_path)
+        tokens = tokenizer.encode(midi)
+
+        bar_count = 0
+        truncated_tokens = []
+        for token in tokens:
+            truncated_tokens.append(token)
+            if token == tokenizer["Bar_None"]:
+                bar_count += 1
+
+            if bar_count >= num_bar:
+                break
+        truncated_midi_tokens.append(truncated_tokens)
+    return truncated_midi_tokens
+
+
+def generate_tokens(input_token, model, device, n_target_bar, bar_token, generation_config):
+    generated_tokens = input_token.copy()
+    input_ids = torch.tensor(input_token).unsqueeze(0).long().to(device)
+    attention_mask = torch.ones_like(input_ids).to(device)
+
+    while generated_tokens.count(bar_token) < n_target_bar:
+        output = model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            generation_config=generation_config,
+        )[0].cpu().numpy().tolist()
+        new_token = output[input_ids.shape[-1]:]
+        generated_tokens.extend(new_token)
+
+        input_ids = torch.tensor(generated_tokens[-500:]).unsqueeze(0).long().to(device)
+        attention_mask = torch.ones_like(input_ids).to(device)
+
+    return generated_tokens
+
+
+def filter_invalid_tokens(generated_tokens, tokenizer):
+    return [
+        token for token in generated_tokens if token in tokenizer.vocab.values()
+    ]

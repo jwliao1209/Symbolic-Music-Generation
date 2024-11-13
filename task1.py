@@ -8,7 +8,14 @@ from transformers import AutoModelForCausalLM, GenerationConfig
 from tqdm import trange, tqdm
 
 from src.constants import CKPT_FILE, CONFIG_FILE
-from src.utils import set_random_seeds, get_device, get_trucated_idx, load_config
+from src.utils import (
+    set_random_seeds,
+    get_device,
+    get_trucated_idx,
+    load_config,
+    generate_tokens,
+    filter_invalid_tokens,
+)
 
 
 def parse_arguments() -> Namespace:
@@ -73,24 +80,8 @@ if __name__ == "__main__":
     )
 
     for i in trange(1, args.n_generated_midi + 1):
-        generated_tokens = [1]
-        input_ids = torch.tensor([1]).unsqueeze(0).long().to(device)
-        attention_mask = torch.ones_like(input_ids).to(device)
-
-        while generated_tokens.count(BAR_TOKEN) < args.n_target_bar:
-            output = model.generate(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                generation_config=generation_config,
-            )[0].cpu().numpy().tolist()
-            new_token = output[input_ids.shape[-1]:]
-            generated_tokens.extend(new_token)
-            tqdm.write(f"Prompt song {i} new bar: {new_token.count(BAR_TOKEN)}, generated bar: {generated_tokens.count(BAR_TOKEN)}")
-
-            input_ids = torch.tensor(generated_tokens[-100:]).unsqueeze(0).long().to(device)
-            attention_mask = torch.ones_like(input_ids).to(device)
-
+        generated_tokens = generate_tokens([1], model, device, args.n_target_bar, BAR_TOKEN, generation_config)
         truncated_idx = get_trucated_idx(generated_tokens, tokenizer, args.n_target_bar)
-        valid_tokens = [token for token in generated_tokens[:truncated_idx + 1] if token in tokenizer.vocab.values()]
+        valid_tokens = filter_invalid_tokens(generated_tokens[:truncated_idx + 1], tokenizer)
         generated_midi = tokenizer.decode(valid_tokens)
         generated_midi.dump_midi(Path(save_folder, f"output_{i}.mid"))

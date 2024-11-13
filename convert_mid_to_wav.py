@@ -13,13 +13,13 @@ def parse_arguments() -> Namespace:
     parser.add_argument(
         "--input_folder",
         type=str,
-        default="results/11-10-10-21-08/task1",
+        default="results/11-10-23-41-39/task2",
         help="folder of dataset"
     )
     parser.add_argument(
         "--output_folder",
         type=str,
-        default="results/11-10-10-21-08/task1_wav",
+        default="results/11-10-23-41-39/task2_wav",
         help="folder of dataset"
     )
     return parser.parse_args()

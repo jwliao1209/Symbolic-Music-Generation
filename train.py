@@ -6,7 +6,7 @@ import wandb
 from miditok import REMI, TokenizerConfig
 from miditok.pytorch_data import DatasetMIDI, DataCollator
 from torch.utils.data import DataLoader
-from transformers import AutoModelForCausalLM, GPTConfig, GPT
+from transformers import AutoModelForCausalLM
 
 from src.constants import PROJECT_NAME, CHECKPOINT_DIR, CONFIG_FILE
 from src.optimizer import get_optimizer
