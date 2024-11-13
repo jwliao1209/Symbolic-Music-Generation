@@ -27,6 +27,13 @@ bash scripts/download_ckpt.sh
 ```
 
 
+### Sound Font
+To download the sound font, use the command:
+```
+bash scripts/download_soundfont.sh
+```
+
+
 ## Training
 To train the model, run the command:
 ```
