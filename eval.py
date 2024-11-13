@@ -1,10 +1,13 @@
 import itertools
+import random
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from miditok import REMI, TokenizerConfig
 from miditok.pytorch_data import DatasetMIDI
+from tqdm import tqdm
 
 from src.musdr import (
     get_bars_crop, 
@@ -130,7 +133,6 @@ if __name__ == "__main__":
         use_chords=True,
         use_programs=True,
         use_tempos=True,
-        params=Path("path", "to", "save", "tokenizer.json")
     )
     tokenizer = REMI(config)
 
@@ -139,7 +141,7 @@ if __name__ == "__main__":
     PITCH_EVS = [v for k,v  in tokenizer.vocab.items() if "Pitch" in k]
 
     dataset = DatasetMIDI(
-        files_paths=list(Path(args.eval_folder).glob("*.mid")),
+        files_paths=list(Path(args.eval_folder).glob("**/*.mid")),
         tokenizer=tokenizer,
         max_seq_len=1024,
         bos_token_id=tokenizer["BOS_None"],
@@ -147,7 +149,7 @@ if __name__ == "__main__":
     )
     
     scores = []
-    for data in dataset:
+    for data in tqdm(dataset):
         seq = data['input_ids'].tolist()
         h1 = compute_piece_pitch_entropy(
             seq,
@@ -158,7 +160,7 @@ if __name__ == "__main__":
 
         h4 = compute_piece_pitch_entropy(
             seq,
-            1,
+            4,
             bar_ev_id=BAR_EV,
             pitch_evs=PITCH_EVS
         )
@@ -177,4 +179,6 @@ if __name__ == "__main__":
             }
         )
     output_path = output_path if args.output_path is not None else Path(args.eval_folder, "scores.csv")
-    pd.DataFrame(scores).to_csv(output_path, index=False)
+    score_df = pd.DataFrame(scores)
+    print(score_df.mean().round(4))
+    score_df.to_csv(output_path, index=False)

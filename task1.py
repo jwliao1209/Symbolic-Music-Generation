@@ -13,6 +13,7 @@ from src.utils import (
     get_device,
     get_trucated_idx,
     load_config,
+    save_json,
     generate_tokens,
     filter_invalid_tokens,
 )
@@ -27,6 +28,11 @@ def parse_arguments() -> Namespace:
         help="path of checkpoint",
     )
     parser.add_argument(
+        "--num_velocities",
+        type=int,
+        default=16,
+    )
+    parser.add_argument(
         "--n_target_bar",
         type=int,
         default=32,
@@ -37,6 +43,26 @@ def parse_arguments() -> Namespace:
         type=int,
         default=20,
         help="number of generated midi",
+    )
+    parser.add_argument(
+        "--max_length",
+        type=int,
+        default=1024,
+    )
+    parser.add_argument(
+        "--top_k",
+        type=int,
+        default=5,
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=1.2,
+    )
+    parser.add_argument(
+        "--repetition_penalty",
+        type=float,
+        default=1.2,
     )
     parser.add_argument(
         "--output_folder",
@@ -53,7 +79,7 @@ if __name__ == "__main__":
     os.makedirs(save_folder, exist_ok=True)
     ckpt_config = load_config(Path(args.ckpt_path, CONFIG_FILE))
     tokenizer_config = TokenizerConfig(
-        num_velocities=16,
+        num_velocities=args.num_velocities,
         use_chords=True,
         use_programs=True,
         use_tempos=True,
@@ -71,13 +97,14 @@ if __name__ == "__main__":
     model.eval()
 
     generation_config = GenerationConfig(
-        max_length=1024,
+        max_length=args.max_length,
         do_sample=True,
-        temperature=1.2,
-        top_k=5,
+        top_k=args.top_k,
+        temperature=args.temperature,
         pad_token_id=model.config.eos_token_id,
-        repetition_penalty=1.5,
+        repetition_penalty=args.repetition_penalty,
     )
+    save_json(vars(args) | {"checkpoint": ckpt_config}, Path(save_folder, CONFIG_FILE))
 
     for i in trange(1, args.n_generated_midi + 1):
         generated_tokens = generate_tokens([1], model, device, args.n_target_bar, BAR_TOKEN, generation_config)
