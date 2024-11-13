@@ -86,7 +86,7 @@ We implemented the code on an environment running Ubuntu 22.04.1, utilizing a 12
 ## Citation
 If you use this code, please cite the following:
 ```bibtex
-@misc{liao2024_source_separation,
+@misc{liao2024_symbolic_music_generation,
     title  = {Symbolic Music Generation},
     author = {Jia-Wei Liao},
     url    = {https://github.com/jwliao1209/Symbolic-Music-Generation},
